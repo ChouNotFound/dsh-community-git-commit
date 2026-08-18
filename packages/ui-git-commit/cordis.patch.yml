@@ -1,0 +1,6 @@
+# The browser bundle layer for the @dsh-community/git-commit plugin:
+# registers the in-toolview CommitCard with the cordis client registry.
+- insert:
+    - id: ui-git-commit
+      name: '@dsh-community/ui-git-commit'
+      platform: web

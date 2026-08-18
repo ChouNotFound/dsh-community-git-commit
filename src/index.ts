@@ -12,9 +12,9 @@ import { Config, resolveConfig } from './config.js'
 import { GitCommitService } from './service.js'
 import { registerCommitTool } from './tool.js'
 
-export { Config } from './config'
-export type { Config as GitCommitPluginConfig } from './config'
-export * from './types'
+export { Config } from './config.js'
+export type { Config as GitCommitPluginConfig } from './config.js'
+export * from './types.js'
 
 export const name = 'git-commit'
 
