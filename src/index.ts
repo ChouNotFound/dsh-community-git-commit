@@ -7,10 +7,10 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { registerCommitCommands } from './commands'
-import { Config, resolveConfig } from './config'
-import { GitCommitService } from './service'
-import { registerCommitTool } from './tool'
+import { registerCommitCommands } from './commands.js'
+import { Config, resolveConfig } from './config.js'
+import { GitCommitService } from './service.js'
+import { registerCommitTool } from './tool.js'
 
 export { Config } from './config'
 export type { Config as GitCommitPluginConfig } from './config'

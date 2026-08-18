@@ -10,16 +10,16 @@
 import { randomUUID } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
 import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
-import type { ResolvedConfig } from './config'
-import { generateCommitMessage, frameInput } from './generate'
+import type { ResolvedConfig } from './config.js'
+import { generateCommitMessage, frameInput } from './generate.js'
 import {
   collectRepoState, commitWithMessage, createGitRunner,
   GitExecutionError, NotAGitRepositoryError,
-} from './git'
+} from './git.js'
 import type {
   CommitGeneratedFrom, CommitScope, CommitStyle,
   GitCommitProposalId, GitCommitProposalPayload, GitRoute,
-} from './types'
+} from './types.js'
 
 /** Mint the next unique proposal identity (instance-token prefixed so a resumed log never repeats one). */
 export function mintProposalId(): GitCommitProposalId {

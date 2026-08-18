@@ -12,8 +12,8 @@ import {
   type CommitOutcome,
   type GitCommitService,
   type ProposeOutcome,
-} from './service'
-import type { CommitStyle, GitCommitProposalId } from './types'
+} from './service.js'
+import type { CommitStyle, GitCommitProposalId } from './types.js'
 
 /** Parse a command-line style token; undefined means "use the default". */
 export function parseStyleToken(raw: string): CommitStyle | undefined {

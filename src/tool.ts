@@ -7,7 +7,7 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import type { GitCommitService, ProposeOutcome } from './service'
+import type { GitCommitService, ProposeOutcome } from './service.js'
 
 /** The exact model-facing tool name. */
 export const COMMIT_TOOL_NAME = 'git_commit_propose'

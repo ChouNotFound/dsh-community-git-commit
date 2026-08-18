@@ -11,7 +11,7 @@ import { BlockAssembler, createUserMessage, deepFreeze } from '@deepseek-ai/dsh-
 import type { FinishReason, GenerateOptions, Message } from '@deepseek-ai/dsh-llm'
 import type { SessionId } from '@deepseek-ai/dsh-session'
 import { deadline } from '@deepseek-ai/dsh-timeout'
-import type { CommitGeneratedFrom, CommitStyle, GitRoute } from './types'
+import type { CommitGeneratedFrom, CommitStyle, GitRoute } from './types.js'
 
 /** Capability-owned timeout reason code for auxiliary commit-message requests. */
 export const GIT_COMMIT_TIMEOUT_CODE = 'GIT_COMMIT_TIMEOUT'
