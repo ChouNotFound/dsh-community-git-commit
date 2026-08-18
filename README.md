@@ -62,16 +62,20 @@ cd dsh-community-git-commit
 pnpm install
 pnpm run build
 
-# 2) 安装到现有 web profile
-#    （默认 DSH_HOME=C:\Users\zhouz\.dsh\profiles\web）
+# 2) 安装到现有 web profile（DSH_HOME=C:\Users\zhouz\.dsh\profiles\web）
+#    这是两个独立 bundle 层，需要分别 add：
 dsh plugin --profile web add .
-# 若 dsh CLI 不在 PATH：
-# npx -y @deepseek-ai/dsh@0.1.0-rc.7 plugin --profile web add .
+dsh plugin --profile web add ./packages/ui-git-commit
 
 # 3) 重启 dsh web，刷新 http://127.0.0.1:3080
 ```
 
-卸载：`dsh plugin --profile web remove @dsh-community/git-commit`
+卸载：
+
+```sh
+dsh plugin --profile web remove @dsh-community/git-commit
+dsh plugin --profile web remove @dsh-community/ui-git-commit
+```
 
 ## 使用
 

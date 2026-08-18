@@ -51,7 +51,12 @@ dsh-community-git-commit/
 
 ## `cordis.patch.yml`
 
-bundle patch 文件：把 `git-commit`（宿主工具）+ `ui-git-commit`（浏览器卡片）两行插入到现有 profile 的 bundle 列表，使宿主运行时增量扫描并按需加载。
+每个 bundle 包各持有一个 `cordis.patch.yml`，由对应 `package.json` 的 `dsh.bundle.patch` 字段指向：
+
+- 根 `cordis.patch.yml` → 插入 `git-commit`（宿主）
+- `packages/ui-git-commit/cordis.patch.yml` → 插入 `ui-git-commit`（浏览器，标记 `platform: web`）
+
+两个 patch 各对应一次 `dsh plugin add`，互不耦合。DSH 加载时按 `bundles` 数组顺序串起来。
 
 ## 数据流
 

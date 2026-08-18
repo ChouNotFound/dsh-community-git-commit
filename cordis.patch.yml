@@ -1,9 +1,7 @@
-# The @dsh-community/git-commit bundle layer: one host row (service + tool +
-# commands + events) and one browser row (the commit-proposal card). Applied
-# after dsh-base and dsh-web-app when the bundle is installed into a profile.
+# The @dsh-community/git-commit host bundle layer: one row that registers
+# the commit-pipeline service, the model tool, and the slash commands. The
+# browser half is its own bundle layer (see packages/ui-git-commit/cordis.patch.yml),
+# registered separately by 'dsh plugin add ./packages/ui-git-commit'.
 - insert:
     - id: git-commit
       name: '@dsh-community/git-commit'
-
-    - id: ui-git-commit
-      name: '@dsh-community/ui-git-commit'
