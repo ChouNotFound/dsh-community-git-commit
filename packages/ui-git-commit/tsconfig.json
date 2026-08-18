@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es2024",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2024", "dom"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noImplicitAny": true,
+    "declaration": true,
+    "outDir": "lib",
+    "rootDir": "src",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": [],
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@dsh-community/git-commit": ["../../../src/index"],
+      "@dsh-community/git-commit/*": ["../../../src/*"]
+    }
+  },
+  "include": ["src"]
+}

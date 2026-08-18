@@ -1,0 +1,9 @@
+# The @dsh-community/git-commit bundle layer: one host row (service + tool +
+# commands + events) and one browser row (the commit-proposal card). Applied
+# after dsh-base and dsh-web-app when the bundle is installed into a profile.
+- insert:
+    - id: git-commit
+      name: '@dsh-community/git-commit'
+
+    - id: ui-git-commit
+      name: '@dsh-community/ui-git-commit'
