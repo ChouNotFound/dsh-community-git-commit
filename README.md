@@ -1,85 +1,127 @@
-# `@dsh-community/git-commit` — DSH 外置 Git 提交信息生成插件
+# git-commit for DeepSeek Harness
 
-`deepseek-harness` 同级独立项目。为现有 DSH Web GUI 新增"按历史风格生成 git 提交信息、可在卡片中审阅编辑后点击提交"的能力。**不修改 `deepseek-harness` 仓库任何文件**，通过 `dsh plugin add` 安装到现有 profile 后由宿主运行时增量扫描并按需加载。
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.3-blue.svg)](package.json)
+[![DSH](https://img.shields.io/badge/DSH-0.1.0--rc.7-blueviolet.svg)](https://github.com/deepseek-ai)
+
+在 DSH（DeepSeek Harness）Web GUI 中，按仓库历史风格生成 git commit 信息，在工具卡片里审阅 / 编辑 / 一键提交。**不修改 `deepseek-harness` 仓库任何代码**。
+
+[English summary](#english) · [关于 DSH](#关于-dsh)
+
+## 这是什么
+
+DSH Web GUI 的一个外置插件。用户输入「生成提交信息」后，Agent 调用 `git_commit_propose` 工具，按仓库最近的提交风格生成提案，在工具行内显示一张可编辑卡片：
+
+- **提交**：宿主机执行 `git commit`
+- **重新生成 / 风格切换**：让 Agent 再调一次工具，得到一张新卡片
+- **复制**：把当前文本框内容复制到剪贴板
+
+通过 `dsh plugin add` 安装到现有 profile，运行时增量扫描并按需加载，**不会触碰 `deepseek-harness` 仓库**。
+
+## 工作流程
+
+```
+  用户输入「生成提交信息」
+         │
+         ▼
+   ┌──────────────┐
+   │ Agent 推理回合 │  ── 调用 git_commit_propose
+   └──────┬───────┘
+          │ 提案 (subject + body + stagedFiles)
+          ▼
+   ┌────────────────────┐
+   │ 工具行内 CommitCard │  ← 可编辑文本框 + 按钮
+   └──────┬─────────────┘
+          │ 点「提交」
+          ▼
+   宿主机 git commit（含暂存区二次校验）
+```
 
 ## 功能
 
-- 对话输入"生成提交信息" → 模型调用 `git_commit_propose` 工具 → 在工具行内显示提案卡片（可编辑文本框、风格徽标、文件数）。
-- **两档风格**：完整（主题行 + 正文）/ 简洁（单行主题）；切换风格 = 让 Agent 重新调用工具生成一张新卡片。
-- 卡片按钮：
-  - **提交**：调用 `/git-commit` 命令；宿主机执行 `git commit`；卡片本地翻到"已提交"。
-  - **重新生成 / 风格切换**：通过 `session.prompt()` 给 Agent 发一条 followup，让 Agent 重新调用工具 → 新卡片。
-  - **复制**：复制当前文本框到剪贴板。
+- **风格感知**：自动学习仓库最近 N 条提交的风格（主题行长度、是否带正文、scope 命名、动词时态）
+- **两档风格**：完整（主题 + 正文）/ 简洁（单行主题）
+- **可编辑卡片**：生成的提案在卡片中可直接修改再提交
+- **暂存区二次校验**：提交前会比对"当前暂存文件"与"生成提案时的暂存文件"，防止过期提案被错误提交
+- **不修改宿主**：作为外置插件以 bundle patch 形式注入，卸载即复原
 
-## 项目结构
+## 兼容
 
-```
-dsh-git-commit/
-├── package.json                      # 宿主包 = bundle 清单 + 运行时插件
-├── cordis.patch.yml                  #  把 git-commit + ui-git-commit 行插入 profile
-├── tsconfig.json
-├── vitest.config.ts
-├── src/
-│   ├── index.ts                      # apply() 注册工具与命令
-│   ├── types.ts                      # GitCommitProposalId/CommitStyle/CommitScope/CommitGeneratedFrom + GitCommitProposalPayload
-│   ├── config.ts                     # 部署配置 + resolveConfig
-│   ├── git.ts                        # createGitRunner / collectRepoState / commitWithMessage
-│   ├── generate.ts                   # buildSystemPrompt / frameInput / composeMessage / generateCommitMessage
-│   ├── service.ts                    # GitCommitService.propose/.commit + findProposalPayload
-│   ├── tool.ts                       # registerCommitTool
-│   └── commands.ts                   # registerCommitCommands
-├── packages/ui-git-commit/            # 浏览器插件包（独立 npm 包）
-│   ├── package.json                  # dsh.client 清单 + exports["client"]
-│   ├── tsconfig.json
-│   ├── tsdown.config.ts              # 复刻 clientBundle 等价配置
-│   ├── src/{index.ts (空 apply), css-modules.d.ts}
-│   └── src/client/
-│       ├── index.ts                  # apply() 注册 locale + tool.call.toolview
-│       ├── CommitCard.tsx            # 卡片组件
-│       ├── CommitCard.module.css     # 语义化 CSS（无主题依赖，回退变量）
-│       └── locales.ts                # zh/en 字典 + LocaleNamespaceMap 合并
-└── tests/                            # vitest 单测
-└── packages/ui-git-commit/tests/     # 组件测试（jsdom 环境）
-```
+| 组件 | 版本 |
+|------|------|
+| DeepSeek Harness | `0.1.0-rc.7` |
+| Node.js | `>= 22` |
+| pnpm | `>= 9` |
 
-## 安装到现有 web profile
+## 安装
 
 ```sh
-# 1) 构建宿主与浏览器包
-cd D:\Code\OpenSource\dsh-git-commit
+# 1) 拉取并构建
+git clone https://github.com/ChouNotFound/dsh-community-git-commit.git
+cd dsh-community-git-commit
 pnpm install
 pnpm run build
 
-# 2) 安装到现有 profile（默认 $DSH_HOME=C:\Users\zhouz\.dsh\profiles\web）
+# 2) 安装到现有 web profile
+#    （默认 DSH_HOME=C:\Users\zhouz\.dsh\profiles\web）
 dsh plugin --profile web add .
-#   （若 dsh CLI 不在 PATH：npx -y @deepseek-ai/dsh@0.1.0-rc.7 plugin --profile web add .）
+# 若 dsh CLI 不在 PATH：
+# npx -y @deepseek-ai/dsh@0.1.0-rc.7 plugin --profile web add .
 
-# 3) 核对层与行
-dsh --profile web --dump-config
-
-# 4) 重启服务 GUI 的 dsh web 进程，刷新 http://127.0.0.1:3080
-#    （client 包改动：重建 ui-git-commit + 重启进程，rev 变化使浏览器重新拉取）
+# 3) 重启 dsh web，刷新 http://127.0.0.1:3080
 ```
 
-卸载：`dsh plugin --profile web remove @dsh-community/git-commit`。
+卸载：`dsh plugin --profile web remove @dsh-community/git-commit`
+
+## 使用
+
+1. 在 DSH Web 中打开任意 git 仓库所在的工作区
+2. `git add` 暂存要提交的文件
+3. 在对话中输入「生成提交信息」 → Agent 调用工具 → 出现提案卡片
+4. 检查卡片：可编辑、切换风格（完整 / 简洁）、重新生成，或直接点 **提交**
 
 ## 开发
 
-- 宿主与 ui 包均通过 pnpm 工作区（`pnpm-workspace.yaml` 包含 `packages/*`）。
-- `pnpm run build`：先 `tsc` 宿主 → 再 `tsc` ui 包 → 再 `tsdown` 打 ui 包浏览器 bundle。
-- `pnpm test`：vitest 跑全部 spec（含 ui 包组件测试，使用 jsdom 环境）。
+```sh
+pnpm install
+pnpm run build       # 编译宿主 + ui 包 + 打浏览器 bundle
+pnpm test            # vitest 跑全部 spec（host + ui 包组件，jsdom 环境）
+pnpm run typecheck
+```
 
-## 关键设计决定（与已合并的方案对比，落地时的实际差异）
+monorepo 结构（pnpm workspace）一句话：`src/` 宿主插件（cordis plugin），`packages/ui-git-commit/` 浏览器插件包（独立 npm 包 + 浏览器 bundle），`cordis.patch.yml` 把两个包插入 profile 的 patch 文件。完整目录与职责见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
 
-- **没有自定义会话事件**：DSH 持久化层对仓库外未知事件类型强制拒绝（除非信封带 `ignorable` 标记，而 `Session.append` API 不暴露该标记）。因此提案数据只通过工具自己的 **`tool/result` 事件 + `presentationMeta`** 持久化——这是外置插件唯一可重放的载体。所以本插件不依赖 `SessionEventMap` merge、不依赖 `@Remote` 服务。
-- **按钮 → 宿主通道走 `commands` Remote**：`ctx.remote.commands.execute(sessionId, line)`，经已发布的 `dsh-commands/remote`，无需改仓库内 `api/remotes` 聚合面。
-- **卡片 = 工具行内的 `tool.call.toolview`**（key=`git_commit_propose`）：从 `block.meta` 读 proposal；不是独立的会话节点，避免与既有 `tool-call` 节点重复渲染。
-- **重新生成 = `session.prompt()` 让 Agent 再调一次工具**：经过 Agent 回合（慢一点但完全可重放 + 模型可见 + 日志留存），新卡片自然出现。旧的提案卡片保留为"备选方案"——可直接点击其提交按钮，暂存集安全校验会防止把与该提案不匹配的更新内容错混提交。
-- **提交命令的暂存集二次校验**：命令的 JSON 负载携带 `proposalId`；服务从会话日志里找到该 proposal 对应的 `tool/result.meta.stagedFiles`，与 `git diff --cached --name-only` 当前结果对比，不一致则拒绝，防止"过期卡片 → 把后来的改动用旧消息错混提交"。
+## 设计 / 限制
 
-## 已知限制
+- 设计决定：[docs/DESIGN.md](docs/DESIGN.md)
+- 架构：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- 已知限制：[docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md)
 
-- **辅助 LLM 请求不写日志**：本工具会发起额外的模型调用以生成提交信息；这条 auxiliary 请求**没有可重放的日志事件**（DSH 仓库外无法注册自定义会话事件类型）。生成结果本身落在 `tool/result` 元数据 + 内容里，可重放。
-- **会话级别本地"已提交"状态**：卡片点击提交后，本地组件进入"已提交"态；如果刷新页面或重启 dsh web，卡片回到"可编辑提案态"——**但**再次提交会因为暂存区已空而被服务拒绝（`暂存区已清空，无法提交`），因此不会重复提交。committed 状态是会话内的，不跨刷新。
-- **"已取代"语义被有意省去**：旧提案卡与新提案卡并存，旧卡作为同一暂存集的不同候选方案存在；如不希望保留旧卡，关闭它所在的工具行即可。
-- **风格切换与重新生成经模型回合**，耗时 2–10 秒并消耗少量 token；如需离线瞬时切换，可改为本地字符串模板替换，但生成质量会下降。
+## 关于 DSH
+
+DeepSeek Harness（`@deepseek-ai/dsh-*`）是 DeepSeek 的本地 AI Agent 运行时。本插件工作在它的 Web GUI 上，需要先安装并运行 DSH `0.1.0-rc.7`。插件宿主通过 cordis 把工具注册到现有 profile，不修改 `deepseek-harness` 仓库本身。
+
+## 许可证
+
+MIT © 2026 [ChouNotFound](https://github.com/ChouNotFound)
+
+## 致谢
+
+- 基于 [DeepSeek Harness](https://github.com/deepseek-ai) `@deepseek-ai/dsh-*` 系列包
+- 插件宿主基于 [cordis](https://github.com/deepseek-ai/cordis)
+
+---
+
+<a name="english"></a>
+
+## English
+
+A plugin for DeepSeek Harness Web GUI that proposes git commit messages based on the repository's recent commit style, presented in an in-line editable card. Install via `dsh plugin add` — no changes to the `deepseek-harness` repo itself.
+
+- **Style-aware**: learns from recent commits (subject length, body presence, scope conventions, verb tense)
+- **Two styles**: full (subject + body) / concise (single-line)
+- **Editable card**: review and edit before committing
+- **Staged-set re-validation**: refuses to commit if the staged files have changed since the proposal was generated
+- **External**: installed as a bundle patch, removed cleanly with one command
+
+See [docs/](docs/) for design, architecture, and known limitations.
